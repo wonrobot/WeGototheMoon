@@ -1,0 +1,28 @@
+//433Mhz Transmission part
+
+
+void senddata()
+{  
+  String txdata = "";
+  txdata += "#";
+  txdata += String(level);
+  txdata += "S";
+  txdata += String(stage);
+  txdata += "$";
+  sendmsg(txdata);
+}
+
+
+void sendmsg(String smsg)
+{
+  unsigned int len = smsg.length() + 1;
+  char msg[len];
+  smsg.toCharArray(msg, len);
+
+  //Serial.print("Sending: ");
+  //Serial.print(msg);
+  vw_send((uint8_t *)msg, strlen(msg));
+  //Serial.print("..");
+  vw_wait_tx(); // Wait until the whole message is gone
+  //Serial.println(".!");
+}
