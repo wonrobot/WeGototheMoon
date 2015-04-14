@@ -1,143 +1,139 @@
 
-unsigned long isrTime = 0;
-
-int servo1angle30 = 30;
-int servo1angle150 = 150;
-boolean servo1direction = true;
-int servo1currentangle = 0;
-
-
-unsigned long servo1Timer = 0;
-unsigned long servo2Timer = 0;
-unsigned long servo3Timer = 0;
-
-
-int servo2currentangle = 0;
-
-int servo3currentangle = 0;
-
-
-void repeatfuncs()   //not using timer. just an isr kind of thing
+//This happens before countdown is started
+void level_0()
 {
-  isrTime = millis();
-  moveservoOne();
-  moveservoTwo();
-  moveservoThree();
 
-}
 
-void moveservoOne()
-{
-  if (servo1On == true)
+  if (stage == 0)
   {
-    if ((isrTime - servo1Timer) > servo1speed)
+    if (millis() - start_num > 3000) //4secs
     {
-      servo1Timer = isrTime;      
-
-      if ((servo1direction == true) || ((servo1currentangle < servo1angle150)&&(servo1currentangle < servo1angle30) ) ) //30 to 150 degree
-      {
-        if (servo1currentangle < servo1angle150)
-        {
-          servo1currentangle++;
-          int mangle = DEGREES_TO_PW(servo1currentangle);
-          radarservo.write(mangle);
-        }
-        else
-        {
-          servo1direction = false;
-        }
-      }
-      else
-      {
-        if (servo1currentangle > servo1angle30) //150 to 30 degree
-        {
-          servo1currentangle--;
-          int mangle = DEGREES_TO_PW(servo1currentangle);
-          radarservo.write(mangle);
-        }
-        else
-        {
-          servo1direction = true;
-        }
-      }
+      Serial.print((millis() - start_num) / 1000);
+      Serial.println("secs");
+      Serial.println("Servo 1 starts rotating to and fro (30 degrees to 150 degrees) like a radar");
+      servo1On = true;
+      stage = 1;
     }
   }
-}
-
-
-
-void moveservoTwo()
-{
-  if ((isrTime - servo2Timer) > servo2speed)
+  else if (stage == 1)
   {
-    
-    servo2Timer = isrTime;
-    if (servo2currentangle < servo2targetangle)  //move anti-clock
+    if (millis() - start_num > 10000) //10secs
     {
-      if (millis() - yyyy > 100)
+      changeLED(stage);
+      if (sdfail == false)
       {
-        Serial.print("Servo 2: ");
-        Serial.println(servo2currentangle);
-        yyyy = millis();
+        tmrpcm.play("sound1.wav");
       }
-      servo2currentangle++;
-      int mangle = DEGREES_TO_PW(servo2currentangle);
-      servoTwo.write(mangle);
-    }
-    else if (servo2currentangle > servo2targetangle)  //move clock-wise
-    {
-      if (millis() - yyyy > 100)
-      {
-        Serial.print("Servo 2: ");
-        Serial.println(servo2currentangle);
-        yyyy = millis();
-      }
-      servo2currentangle--;
-      int mangle = DEGREES_TO_PW(servo2currentangle);
-      servoTwo.write(mangle);
+      Serial.print((millis() - start_num) / 1000);
+      Serial.println("secs");
+      Serial.println("Led 1, HIGH,  SD CARD, Sound 1");
+      stage = 2;
     }
   }
-}
-
-
-void moveservoThree()
-{
-  if ((isrTime - servo3Timer) > servo3speed)
+  else if (stage == 2)
   {
-    servo3Timer = isrTime;
-    if (servo3currentangle < servo3targetangle)  //move anti-clock
+    if (millis() - start_num > 12000) //12secs
     {
-      if (millis() - yyyy > 100)
-      {
-        Serial.print("Servo 3: ");
-        Serial.println(servo3currentangle);
-        yyyy = millis();
-      }
-      servo3currentangle++;
-      int mangle = DEGREES_TO_PW(servo3currentangle);
-      servoThree.write(mangle);
-    }
-    else if (servo3currentangle > servo3targetangle)  //move clock-wise
-    {
-      if (millis() - yyyy > 100)
-      {
-        Serial.print("Servo 3: ");
-        Serial.println(servo3currentangle);
-        yyyy = millis();
-      }
-      servo3currentangle--;
-      int mangle = DEGREES_TO_PW(servo3currentangle);
-      servoThree.write(mangle);
+      changeLED(stage);
+      Serial.print((millis() - start_num) / 1000);
+      Serial.println("secs");
+      Serial.println("Led 2, HIGH  Launch Support Preps Complete");
+      stage = 3;
     }
   }
-}
-
-
-void changeLED(int i)
-{
-  for (int io = 0; io < totalLEDs; io++)
+  else if (stage == 3)
   {
-    //digitalWrite(LED[io], LOW);
+    if (millis() - start_num > 14000) //14secs
+    {
+      changeLED(stage);
+      Serial.print((millis() - start_num) / 1000);
+      Serial.println("secs");
+      Serial.println("Led 3, HIGH  S-II Prep Complete: Second Stage");
+      stage = 4;
+    }
   }
-  digitalWrite(LED[i - 1], HIGH);
+  else if (stage == 4)
+  {
+    if (millis() - start_num > 16000) //16secs
+    {
+      changeLED(stage);
+      Serial.print((millis() - start_num) / 1000);
+      Serial.println("secs");
+      Serial.println("Led 4, HIGH  S-IVB Prep Complete: Third Stage");
+      stage = 5;
+    }
+  }
+  else if (stage == 5)
+  {
+    if (millis() - start_num > 18000) //18secs
+    {
+      changeLED(stage);
+      Serial.print((millis() - start_num) / 1000);
+      Serial.println("secs");
+      Serial.println("Led 5, HIGH  IU Ready: Instrumentation Unit");
+      stage = 6;
+    }
+  }
+  else if (stage == 6)
+  {
+    if (millis() - start_num > 20000) //20secs
+    {
+      changeLED(stage);
+      Serial.print((millis() - start_num) / 1000);
+      Serial.println("secs");
+      Serial.println("Led 6, HIGH   SC Ready");
+      stage = 7;
+    }
+  }
+  else if (stage == 7)
+  {
+    if (millis() - start_num > 22000) //22secs
+    {
+      Serial.print((millis() - start_num) / 1000);
+      Serial.println("secs");
+      Serial.println("Servo 2 moves from 12 degrees to 120 degree in 3 seconds");
+      servo2targetangle = 0;
+      stage = 8;
+    }
+  }
+  else if (stage == 8)
+  {
+    if (millis() - start_num > 26000) //26secs
+    {
+      changeLED(stage - 1);
+      Serial.print((millis() - start_num) / 1000);
+      Serial.println("secs");
+      Serial.println("Led 7, HIGH  EDS Ready: Emergency Detection System");
+      stage = 9;
+    }
+  }
+  else if (stage == 9)
+  {
+    if (millis() - start_num > 28000) //28secs
+    {
+      changeLED(stage - 1);
+      Serial.print((millis() - start_num) / 1000);
+      Serial.println("secs");
+      Serial.println("Led 8, HIGH  S-IC Prep Complete: First Stage");
+      stage = 10;
+    }
+  }
+  else if (stage == 10)
+  {
+    if (millis() - start_num > 30000) //30secs
+    {
+      changeLED(stage - 1);
+      if (sdfail == false)
+      {
+        tmrpcm.play("sound2.wav");
+      }
+      Serial.print((millis() - start_num) / 1000);
+      Serial.println("secs");
+      Serial.println("SD CARD, Sound 2  Automatic Launch Sequence Start:Led 9, HIGH");
+      stage = 0;
+      level = 1;
+      start_num = millis();
+    }
+  }
+
 }
