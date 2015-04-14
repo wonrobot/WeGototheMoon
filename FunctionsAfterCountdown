@@ -1,0 +1,277 @@
+
+unsigned long timerL101 = 0;
+unsigned long timerL102 = 0;
+unsigned long timerL103 = 0;
+unsigned long timerL104 = 0;
+
+//This happens when countdown is happening
+void level_1()
+{
+
+  if (stage == 0)
+  {
+    Serial.println("Countdown Clock (T) starts with the reading 00:03:07 and starts decreasing 1 second.");
+    start_num = 187000 + millis(); //187 seconds
+    stage = 1;
+  }
+
+
+  unsigned long cmill = millis();
+  if (cmill < start_num)
+  {
+    int mins = 0;
+    int secs = (int)((start_num - cmill) / 1000);
+
+    while (secs > 59)
+    {
+      mins++;
+      secs = secs - 60;
+    }
+
+    toDisplayto = (mins * 100) + secs;
+
+
+    if (last_sec != secs)
+    {
+      //Serial.print(numb);
+      //Serial.print("   ");
+      Serial.print(mins);
+      Serial.print(":");
+      if (secs < 10)
+      {
+        Serial.print("0");
+      }
+      Serial.println(secs);
+      last_sec = secs;
+    }
+
+
+    if ((stage == 1) && (mins <= 2) && (secs <= 47))
+    {
+      changeLED(stage + 9);
+      Serial.println("Led 10, HIGH  S-IVB LOX Tank pressurization");
+      stage = 2;
+    }
+    else if ((stage == 2) && (mins <= 2) && (secs <= 44))
+    {
+      changeLED(stage + 9);
+      Serial.println("Led 11, HIGH S-II LOX Tank Pressurized: Liquid oxygen tank of second stage");
+      stage = 3;
+    }
+    else if ((stage == 3) && (mins <= 2) && (secs <= 40))
+    {
+      changeLED(stage + 9);
+      Serial.println("Led 12, HIGH   S-IVB LH2 Tank Pressurized: Liquid Hydrogen tank of third stage");
+      stage = 4;
+    }
+    else if ((stage == 4) && (mins <= 2) && (secs <= 36))
+    {
+      changeLED(stage + 9);
+      Serial.println("Led 13, HIGH   S-IVB Propellants Pressurized:");
+      stage = 5;
+    }
+    else if ((stage == 5) && (mins <= 2) && (secs <= 30))
+    {
+      changeLED(stage + 8);
+      if (sdfail == false)
+      {
+        tmrpcm.play("sound3.wav");
+      }
+      Serial.println("SD CARD, Sound 3 Panel 1 (Arduino SPI TFT) switches on and starts displaying all the weather data (Temperature, Moisture, Pressure, Luminosity) received from Base Station");
+      stage = 6;
+    }
+    else if ((stage == 6) && (mins <= 2) && (secs <= 20))
+    {
+      changeLED(stage + 8);
+      Serial.println("Led 14, HIGH  S-IC Fuel Tank Pressurized:  First stage RP-1 rocket fuel tank");
+      stage = 7;
+    }
+    else if ((stage == 7) && (mins <= 2) && (secs <= 10))
+    {
+      changeLED(stage + 8);
+      Serial.println("Led 15, HIGH  S-IC LOX Tank Pressurized: Liquid oxygen tank of first stage");
+      stage = 8;
+    }
+    else if ((stage == 8) && (mins <= 2) && (secs <= 5))
+    {
+      changeLED(stage + 8);
+      Serial.println("Led 16, HIGH   S-II LH2 Tank Pressurized: Liquid Hydrogen tank of second stage");
+      stage = 9;
+    }
+    else if ((stage == 9) && (mins <= 2) && ((secs == 0) || (secs == 59)))
+    {
+      if (sdfail == false)
+      {
+        tmrpcm.play("sound4.wav");
+      }
+      Serial.println("SD CARD, Sound 4   Panel 2 (Arduino SPI TFT) switches on and starts displaying all the Telemetry data received via RF Wireless from the Rocket (Acceleration, Pitch, Roll, Heading and GPS reading)");
+      stage = 10;
+    }
+    else if ((stage == 10) && (mins <= 1) && (secs <= 40))
+    {
+      changeLED(stage + 7);
+      Serial.println("Led 17, HIGH    S-II Propellants Pressurized");
+      stage = 11;
+    }
+    else if ((stage == 11) && (mins <= 1) && (secs <= 30))
+    {
+      changeLED(stage + 7);
+      Serial.println("Led 18, HIGH    S-IC Intertank Carrier Retracted");
+      stage = 12;
+    }
+    else if ((stage == 12) && (mins <= 1) && (secs <= 28))
+    {
+      changeLED(stage + 7);
+      Serial.println("Led 19, HIGH  S-IC Intertank Arm Retracted  Servo 3 moves 120 degree in 4 seconds");
+      servo3targetangle = 0;
+      stage = 13;
+    }
+    else if ((stage == 13) && (mins == 0) && (secs <= 50))
+    {
+      changeLED(stage + 7);
+      Serial.println("Led 20, HIGH   Switch to Internal Power (S1)via Radio Frequency activates LED  A in the rocket");
+      stage = 14;
+    }
+    else if ((stage == 14) && (mins == 0) && (secs <= 48))
+    {
+      changeLED(stage + 7);
+      Serial.println("Led 21, HIGH     Switch to Internal Power (SII)via Radio Frequency activates LED  B in the rocket");
+      stage = 15;
+    }
+    else if ((stage == 15) && (mins == 0) && (secs <= 46))
+    {
+      changeLED(stage + 7);
+      Serial.println("Led 22, HIGH  Switch to Internal Power (S1V)via Radio Frequency activates LED  C in the rocket");
+      stage++;
+    }
+    else if ((stage == 16) && (mins == 0) && (secs <= 44))
+    {
+      changeLED(stage + 7);
+      Serial.println("Led 23, HIGH   Switch to Internal Power (IU)via Radio Frequency activates LED  D in the rocket");
+      stage++;
+    }
+    else if ((stage == 17) && (mins == 0) && (secs <= 38))
+    {
+      changeLED(stage + 7);
+      Serial.println("Led 24, HIGH   S1C Propellants Pressurised");
+      stage++;
+    }
+    else if ((stage == 18) && (mins == 0) && (secs <= 30))
+    {
+      changeLED(stage + 7);
+      Serial.println("Led 25, HIGH  S-1C Carrier K/O and Arm Retracted");
+      Serial.println("Servo 4 moves 120 degree in 4 seconds");
+      Serial.println("SIC Engine Hydraulic System Flight Activation");
+      stage++;
+    }
+    else if ((stage == 19) && (mins == 0) && (secs <= 20))
+    {
+      Serial.println("");
+      stage++;
+    }
+    else if ((stage == 20) && (mins == 0) && (secs <= 17))
+    {
+      if (timerL101 == 0)
+      {
+        Serial.println("Guidance Reference Release // Guidance is Internal");
+        timerL101 = millis();
+      }
+
+      if ((millis() - timerL101) > 800)
+      {
+        timerL101 = 0;
+        changeLED(stage + 6);
+        Serial.println("Led 26, HIGH  Retract and Lock S-IC Forward Service Arm    Servo 4 moves 120 degree   ");
+        stage++;
+      }
+    }
+    else if ((stage == 21) && (mins == 0) && (secs <= 16))
+    {
+      stage++;
+    }
+    else if ((stage == 22) && (mins == 0) && (secs <= 12))
+    {
+      changeLED(stage + 5);
+      Serial.println("Led 27, HIGH  LES Ready for Ignition");
+      stage++;
+    }
+    else if ((stage == 23) && (mins == 0) && (secs <= 9))
+    {
+
+      if (timerL102 == 0)
+      {
+        timerL102 = millis();
+      }
+
+      if ((millis() - timerL102) > 100)
+      {
+        timerL102 = 0;
+        changeLED(stage + 5);
+        Serial.println("Led 28, HIGH  ");
+        Serial.println("Vibration Motor, starts");
+        if (sdfail == false)
+        {
+          tmrpcm.play("sound5.wav");
+        }
+        Serial.println("SD CARD, Sound 5,   LED LaunchPad, HIGH (0.4 seconds)");
+        Serial.println("LED LaunchPad, LOW (0.4 seconds)");
+        Serial.println("LED LaunchPad,, HIGH (0.3 seconds)");
+        Serial.println("LED LaunchPad, (0.3 seconds)");
+        Serial.println("LED LaunchPad, (0.3 seconds)");
+        Serial.println("LED LaunchPad, (0.3 seconds)");
+        Serial.println("LED LaunchPad, (0.2 seconds)");
+        Serial.println("LED LaunchPad, (0.2 seconds)");
+        Serial.println("LED LaunchPad, (0.2 seconds)");
+        Serial.println("LED LaunchPad, (0.2 seconds)");
+        Serial.println("LED LaunchPad, (0.1 seconds)");
+        Serial.println("LED LaunchPad, (0.1 seconds)");
+        Serial.println("LED LaunchPad, (0.1 seconds)");
+        Serial.println("LED LaunchPad, (0.1 seconds)");
+        Serial.println("LED LaunchPad, (0.1 seconds)");
+        Serial.println("LED LaunchPad, (0.1 seconds)");
+        Serial.println("LED LaunchPad, (0.1 seconds)");
+        Serial.println("LED LaunchPad, (0.1 seconds)");
+        stage++;
+      }
+
+    }
+    else if ((stage == 24) && (mins == 0) && (secs <= 6))
+    {
+
+      if (timerL103 == 0)
+      {
+        timerL103 = millis();
+      }
+
+      if ((millis() - timerL103) > 700)
+      {
+        timerL103 = 0;
+        digitalWrite(LEDLpad, HIGH);
+        Serial.println("LED LaunchPad, HIGH   via Radio Frequency flashes LED  E in the rocket");
+        stage++;
+      }
+    }
+    else if ((stage == 25) && (mins == 0) && (secs <= 1))
+    {
+      changeLED(stage + 4);
+      Serial.println("Led 29, HIGH    via Radio Frequency activates LED  E in the rocket");
+      stage++;
+    }
+    if ((stage == 26) && (mins == 0) && (secs <= 1))
+    {
+      changeLED(stage + 4);
+      Serial.println("Led 30, HIGH      Relay 1, HIGH  Relay 2, HIGH  Relay 3, HIGH");
+      stage++;
+    }
+
+  }
+  else
+  {
+    Serial.println("Countdown finished!");
+    level = 2;
+    stage = 0;
+    start_num = millis();
+  }
+
+
+}
