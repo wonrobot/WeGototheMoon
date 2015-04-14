@@ -1,0 +1,143 @@
+
+unsigned long isrTime = 0;
+
+int servo1angle30 = 30;
+int servo1angle150 = 150;
+boolean servo1direction = true;
+int servo1currentangle = 0;
+
+
+unsigned long servo1Timer = 0;
+unsigned long servo2Timer = 0;
+unsigned long servo3Timer = 0;
+
+
+int servo2currentangle = 0;
+
+int servo3currentangle = 0;
+
+
+void repeatfuncs()   //not using timer. just an isr kind of thing
+{
+  isrTime = millis();
+  moveservoOne();
+  moveservoTwo();
+  moveservoThree();
+
+}
+
+void moveservoOne()
+{
+  if (servo1On == true)
+  {
+    if ((isrTime - servo1Timer) > servo1speed)
+    {
+      servo1Timer = isrTime;      
+
+      if ((servo1direction == true) || ((servo1currentangle < servo1angle150)&&(servo1currentangle < servo1angle30) ) ) //30 to 150 degree
+      {
+        if (servo1currentangle < servo1angle150)
+        {
+          servo1currentangle++;
+          int mangle = DEGREES_TO_PW(servo1currentangle);
+          radarservo.write(mangle);
+        }
+        else
+        {
+          servo1direction = false;
+        }
+      }
+      else
+      {
+        if (servo1currentangle > servo1angle30) //150 to 30 degree
+        {
+          servo1currentangle--;
+          int mangle = DEGREES_TO_PW(servo1currentangle);
+          radarservo.write(mangle);
+        }
+        else
+        {
+          servo1direction = true;
+        }
+      }
+    }
+  }
+}
+
+
+
+void moveservoTwo()
+{
+  if ((isrTime - servo2Timer) > servo2speed)
+  {
+    
+    servo2Timer = isrTime;
+    if (servo2currentangle < servo2targetangle)  //move anti-clock
+    {
+      if (millis() - yyyy > 100)
+      {
+        Serial.print("Servo 2: ");
+        Serial.println(servo2currentangle);
+        yyyy = millis();
+      }
+      servo2currentangle++;
+      int mangle = DEGREES_TO_PW(servo2currentangle);
+      servoTwo.write(mangle);
+    }
+    else if (servo2currentangle > servo2targetangle)  //move clock-wise
+    {
+      if (millis() - yyyy > 100)
+      {
+        Serial.print("Servo 2: ");
+        Serial.println(servo2currentangle);
+        yyyy = millis();
+      }
+      servo2currentangle--;
+      int mangle = DEGREES_TO_PW(servo2currentangle);
+      servoTwo.write(mangle);
+    }
+  }
+}
+
+
+void moveservoThree()
+{
+  if ((isrTime - servo3Timer) > servo3speed)
+  {
+    servo3Timer = isrTime;
+    if (servo3currentangle < servo3targetangle)  //move anti-clock
+    {
+      if (millis() - yyyy > 100)
+      {
+        Serial.print("Servo 3: ");
+        Serial.println(servo3currentangle);
+        yyyy = millis();
+      }
+      servo3currentangle++;
+      int mangle = DEGREES_TO_PW(servo3currentangle);
+      servoThree.write(mangle);
+    }
+    else if (servo3currentangle > servo3targetangle)  //move clock-wise
+    {
+      if (millis() - yyyy > 100)
+      {
+        Serial.print("Servo 3: ");
+        Serial.println(servo3currentangle);
+        yyyy = millis();
+      }
+      servo3currentangle--;
+      int mangle = DEGREES_TO_PW(servo3currentangle);
+      servoThree.write(mangle);
+    }
+  }
+}
+
+
+void changeLED(int i)
+{
+  for (int io = 0; io < totalLEDs; io++)
+  {
+    //digitalWrite(LED[io], LOW);
+  }
+  digitalWrite(LED[i - 1], HIGH);
+}
