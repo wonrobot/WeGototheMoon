@@ -1,0 +1,260 @@
+#include <Wire.h>
+#include <math.h>
+#include <L3G4200D.h>
+#include "DHT.h"
+#include <BH1750.h>
+#include <VirtualWire.h>
+
+#define Register_ID 0
+#define Register_2D 0x2D
+#define Register_X0 0x32
+#define Register_X1 0x33
+#define Register_Y0 0x34
+#define Register_Y1 0x35
+#define Register_Z0 0x36
+#define Register_Z1 0x37
+
+#define CTRL_REG1 0x20
+#define CTRL_REG2 0x21
+#define CTRL_REG3 0x22
+#define CTRL_REG4 0x23
+
+#define addressHMC 0x1E //0011110b, I2C 7bit addressHMC of HMC5883
+
+#define DHTTYPE DHT11
+#define DHTPIN 2     // what pin we're connected to
+
+
+#define BMP085_ADDRESS 0x77  // I2C address of BMP085
+
+
+//BMP
+short temperature;
+long pressure;
+double altitude = 0;
+
+
+//ADXL
+int ADXAddress = 0xA7 >> 1;  // the default 7-bit slave address
+double Xg,Yg,Zg;
+
+int pitch,roll,yaw = 0; //for accel and mag
+
+float realxa, realya, realza = 0;
+
+//Humidity and Temp sensor
+float h = 0;
+// Read temperature as Celsius
+float t = 0;
+
+//gyroscope variables
+
+
+int pitch_gyro,roll_gyro,yaw_gyro = 0;
+
+//LUX
+uint16_t lux = 0;
+
+
+
+DHT dht(DHTPIN, DHTTYPE);
+BH1750 lightMeter;
+
+unsigned long timer1 = 0;
+unsigned long timer2 = 0;
+unsigned long timer3 = 0;
+unsigned long timer4 = 0;
+unsigned long timer5 = 0;
+unsigned long timer6 = 0;
+unsigned long timer7 = 0;
+
+void setup() 
+{
+  Serial.begin(9600);
+  Wire.begin();
+
+  delay(100);
+  // enable to measute g data
+  Wire.beginTransmission(ADXAddress);
+  Wire.write(Register_2D);
+  Wire.write(8);                //measuring enable
+  Wire.endTransmission();     // stop transmitting
+
+  delay(100);
+  bmp085Calibration();
+  delay(100);
+  //gyroscope setup
+  writeI2C(CTRL_REG1, 0x1F);    // Turn on all axes, disable power down
+  writeI2C(CTRL_REG3, 0x08);    // Enable control ready signal
+  writeI2C(CTRL_REG4, 0x80);    // Set scale (500 deg/sec)
+  delay(100);
+  dht.begin();
+  delay(100);
+  //light
+  lightMeter.begin();
+  delay(100);
+
+  //Put the HMC5883 IC into the correct operating mode
+  Wire.beginTransmission(addressHMC); //open communication with HMC5883
+  Wire.write(0x02); //select mode register
+  Wire.write(0x00); //continuous measurement mode
+  Wire.endTransmission();
+  delay(100);
+  
+  //Tx setup
+  vw_set_ptt_inverted(true); //
+  vw_set_tx_pin(12);
+  vw_setup(4000);// speed of data transfer Kbps
+  delay(100);
+  sendmsg("Hello");
+
+  Serial.println("Start");
+  
+  //First Readings
+  lux = lightMeter.readLightLevel();
+  getGyroValues(); 
+  GyroOrientation();
+  accel_read();
+  getXYZmagnetometer();
+  OrientationAngles();
+  read_temp_pressure();
+  dht_read();
+  
+}
+
+
+
+
+void loop()
+{
+
+  if(millis()-timer1>3000)
+  {
+    uint16_t lux_t = lightMeter.readLightLevel();
+    if(lux_t>0)
+    {
+      lux = lux_t;
+    }
+    timer1 = millis();
+  }
+  if(millis()-timer2>100)
+  {
+    getGyroValues(); 
+    GyroOrientation();
+    timer2 = millis();
+  }
+  if(millis()-timer3>1000)
+  {
+    accel_read();
+    getXYZmagnetometer();
+    //calculating pitch,roll and yaw
+
+    OrientationAngles();
+    timer3 = millis();
+
+  }
+  if(millis()-timer4>1000)
+  {
+    read_temp_pressure();
+    timer4 = millis();
+  }
+  if(millis()-timer5>5000)
+  {
+    dht_read();
+    timer5 = millis();
+  }
+  if(millis()-timer6>1000)
+  {
+    serial_print_everything();
+    timer6 = millis();
+  }
+  if(millis()-timer7>1000)
+  {
+    //Transmision
+    senddata();
+    timer7 = millis();
+  }
+
+  delay(10);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+void serial_print_everything()
+{
+
+  //Serial printing every 1 second
+
+  //Accel
+  Serial.print("Accel(");
+  Serial.print(Xg);
+  Serial.print(", ");
+  Serial.print(Yg);
+  Serial.print(", ");
+  Serial.print(Zg);
+  Serial.print(")   \t");
+
+  //Orientation from accel and Mag
+  Serial.print("Pitch:");
+  Serial.print(pitch);
+  Serial.print("  \tRoll:");
+  Serial.print(roll);
+  Serial.print("  \tHead:");
+  Serial.print(yaw);
+  Serial.print("  \t");
+
+  //Orientation from Gyroscope
+  Serial.print("Gyro(");
+  Serial.print(pitch_gyro);
+  Serial.print(", ");
+  Serial.print(roll_gyro);
+  Serial.print(", ");
+  Serial.print(yaw_gyro);
+  Serial.print(")  \t");
+ 
+  //Temp and Pressure
+  Serial.print("T1:");
+  Serial.print(temperature, DEC);
+  Serial.print("C\t");
+  
+  Serial.print("\tT2: "); 
+  Serial.print((int)t);
+  Serial.print("C");
+  Serial.print("\tP:");
+  Serial.print(pressure, DEC);
+  Serial.print("Pa ");
+
+
+
+  //DHT
+  Serial.print("\tH:"); 
+  Serial.print((int)h);
+  Serial.print("%");
+  //Serial.print("Heat index: ");
+  //Serial.print(hi);
+  //Serial.println(" *F");
+
+  Serial.print("\tLux: ");
+  Serial.print(lux);
+
+  Serial.print("\t Alt: ");
+  Serial.print(altitude);
+  Serial.print("m");
+  Serial.println(); 
+
+}
+
+
+
+
+
